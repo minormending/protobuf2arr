@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package protobuf2arr;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FieldOptions {
+    optional bool nullable = 50027;
+}
