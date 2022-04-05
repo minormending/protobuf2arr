@@ -176,6 +176,7 @@ message TaskQueue {
 }
 ```
 
+### Output
 Assume that we want to ignore the `queue_name` and `date` fields and send the `None` type when they are not set, we can use protobuf custom field options. Regardless of which method is choosen, we get the results:
 ```
 task_queue = taskqueue_pb2.TaskQueue()
