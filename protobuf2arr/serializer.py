@@ -10,7 +10,13 @@ def serialize(obj: Message) -> List[Any]:
             result.append(None)
         
         if field.type == field.TYPE_MESSAGE:
-            val = serialize(val)
+            if field.label == field.LABEL_REPEATED:
+                sub_result: List[Any] = []
+                for item in val:
+                    sub_result.append(serialize(item))
+                val = sub_result
+            else:
+                val = serialize(val)
         if field.has_options and val == field.default_value:
             options = field.GetOptions()
             for ext in options.Extensions:
