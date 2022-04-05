@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "protobuf2arr"
+version = "0.1.0"
+description = "Translate a protobuf message to Google's RPC array format."
+authors = ["Kevin Ramdath <krpent@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+protobuf = "^3.20.0"
+
+[tool.poetry.dev-dependencies]
+black = "^22.3.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
