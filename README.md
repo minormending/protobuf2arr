@@ -46,9 +46,9 @@ Python implementation remains the same, with the addition of enabling `field3`.
 message.field3 = True
 ```
 
-RPC array format now includes `None` for the missing field `3` and the value of `field3` in the array position `4` (one-based). 
+RPC array format now includes `None` or `null` (serialized string) for the missing field `3` and the value of `field3` in the array position `4` (one-based). 
 ```
-[77, "Hello World", None, True]
+[77, "Hello World", null, True]
 ```
 
 # Installation and Usage
@@ -114,7 +114,7 @@ items {
 }
 ```
 
-However, when we serialize the protobuf message to an array `serialize(task_queue)`, we get the following:
+However, when we serialize the protobuf message to an array `serialize_msg2arr(task_queue)`, we get the following:
 ```
 [78, 'redis:thread:tasks', [[1, 'cleanup:1', '2022-04-01'], [2, 'cleanup:2', '2022-04-01']]]
 ```
@@ -124,7 +124,7 @@ Consider the empty state for the task queue with a single empty task.
 ```
 task_queue = taskqueue_pb2.TaskQueue()
 task_queue.items.append(taskqueue_pb2.TaskQueue.TaskItem())
-serialize(task_queue)
+serialize_msg2arr(task_queue)
 ```
 ```
 [0, '', [[0, '', '']]]
@@ -177,12 +177,12 @@ message TaskQueue {
 ```
 
 ### Output
-Assume that we want to ignore the `queue_name` and `date` fields and send the `None` type when they are not set, we can use protobuf custom field options. Regardless of which method is choosen, we get the results:
+Assume that we want to ignore the `queue_name` and `date` fields and send the `None` or `null` type when they are not set, we can use protobuf custom field options. Regardless of which method is choosen, we get the results:
 ```
 task_queue = taskqueue_pb2.TaskQueue()
 task_queue.items.append(taskqueue_pb2.TaskQueue.TaskItem())
-serialize(task_queue)
+serialize_msg2arr(task_queue)
 ```
 ```
-[None, '', [[0, '', None]]]
+[null, '', [[0, '', null]]]
 ```
