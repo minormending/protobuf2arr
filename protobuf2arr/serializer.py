@@ -1,7 +1,9 @@
+import json
 from typing import Any, List
 from google.protobuf.message import Message 
 
-def serialize(obj: Message) -> List[Any]:
+
+def msg_to_arr(obj: Message) -> List[Any]:
     result: List[Any] = []
     for field in obj.DESCRIPTOR.fields:
         val, pos = getattr(obj, field.name), field.number - 1
@@ -13,10 +15,10 @@ def serialize(obj: Message) -> List[Any]:
             if field.label == field.LABEL_REPEATED:
                 sub_result: List[Any] = []
                 for item in val:
-                    sub_result.append(serialize(item))
+                    sub_result.append(msg_to_arr(item))
                 val = sub_result
             else:
-                val = serialize(val)
+                val = msg_to_arr(val)
         if field.has_options and val == field.default_value:
             options = field.GetOptions()
             for ext in options.Extensions:
@@ -26,6 +28,10 @@ def serialize(obj: Message) -> List[Any]:
         result.append(val)
     print(obj.DESCRIPTOR.name, "result:", result)
     return result
+
+def serialize_msg2arr(message: Message) -> str:
+    arr = msg_to_arr(message)
+    return json.dumps(arr)
 
 if __name__ == "__main__":
     import flights_pb2 as flights_pb2
