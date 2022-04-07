@@ -25,7 +25,7 @@ def msg_to_arr(obj: Message) -> List[Any]:
             if field.label == field.LABEL_REPEATED:
                 list_vals: List[Any] = []
                 for item in val:
-                    if default_values and str(item) in default_values:
+                    if default_values and str(item).strip() in default_values:
                         list_vals.append(None)
                     else:
                         list_vals.append(msg_to_arr(item))

@@ -5,5 +5,5 @@ package protobuf2arr;
 import "google/protobuf/descriptor.proto";
 
 extend google.protobuf.FieldOptions {
-    optional bool nullable = 50027;
+    optional string nullable = 50027;
 }

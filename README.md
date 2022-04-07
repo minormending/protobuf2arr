@@ -51,16 +51,14 @@ RPC array format now includes `None` or `null` (serialized string) for the missi
 [77, "Hello World", null, True]
 ```
 
-# Installation and Usage
-
-## Installation
+# Installation
 
 You can install the package directly from github via:
 ```
 pip install git+https://github.com/minormending/protobuf2arr
 ```
 
-## Usage
+# Usage
 Assuming we have a protobuf message format defined as such:
 ```
 syntax = "proto3";
@@ -119,7 +117,7 @@ However, when we serialize the protobuf message to an array `serialize_msg2arr(t
 [78, 'redis:thread:tasks', [[1, 'cleanup:1', '2022-04-01'], [2, 'cleanup:2', '2022-04-01']]]
 ```
 
-## Advanced Usage
+# Nullable Types
 Consider the empty state for the task queue with a single empty task.
 ```
 task_queue = taskqueue_pb2.TaskQueue()
@@ -133,21 +131,21 @@ Protobuf fields empty state is their type default, so `0` for `int32` and the em
 
 This library allows you to include a `nullable` option on any field where the default value should be translated to a `None` type. The `nullable` custom option can be included either of two ways in your protobuf schema, the serializer only cares about the option name.
 
-### Inline declaration
+## Inline declaration
 Declare the custom option inline in your proto file:
 ```
 import "google/protobuf/descriptor.proto";
 
 extend google.protobuf.FieldOptions {
-    optional bool nullable = 50027;
+    optional string nullable = 50027;
 }
 ```
-The option extension number does not matter, so long as it is within the proper Protobuf field option range. Now you to tag your fields with this option as such:
+The option extension number does not matter, so long as it is within the proper Protobuf field option range. Now you to tag your fields with this option and the specific value (`string`) you want to be parsed to `None` as such:
 ```
-int32 queue_id = 1 [(nullable) = true];
+int32 queue_id = 1 [(nullable) = '0'];
 ```
 
-### Package declaration
+## Package declaration
 Alteratively, you can define this custom option in a separate proto file and import it into your message.
 
 `nullable_option.proto`:
@@ -159,7 +157,7 @@ package protobuf2arr;
 import "google/protobuf/descriptor.proto";
 
 extend google.protobuf.FieldOptions {
-    optional bool nullable = 50027;
+    optional string nullable = 50027;
 }
 ```
 
@@ -172,11 +170,11 @@ package mypackage;
 import "nullable_option.proto"
 
 message TaskQueue {
-    int32 queue_id = 1 [(nullable_option.nullable) = true];
+    int32 queue_id = 1 [(nullable_option.nullable) = '0'];
 }
 ```
 
-### Output
+## Output
 Assume that we want to ignore the `queue_name` and `date` fields and send the `None` or `null` type when they are not set, we can use protobuf custom field options. Regardless of which method is choosen, we get the results:
 ```
 task_queue = taskqueue_pb2.TaskQueue()
@@ -185,4 +183,26 @@ serialize_msg2arr(task_queue)
 ```
 ```
 [null, '', [[0, '', null]]]
+```
+
+# Nullable Messages
+Set the `nullable` tag to the empty message state `''` to support lists of messages where an item is `None` i.e the default state. Alternatively, more complicated default states are supported:
+
+`message.proto`:
+```
+repeated TaskItem items = 3 [(nullable) = 'task_id: 1'];
+```
+
+`message.py`:
+```
+task_queue = taskqueue_pb2.TaskQueue()
+task = taskqueue_pb2.TaskQueue.TaskItem()
+task.task_id = 1
+task_queue.items.append(task)
+serialize_msg2arr(task_queue)
+```
+
+`output`:
+```
+[null, '', [null]]
 ```
