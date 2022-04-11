@@ -53,7 +53,7 @@ RPC array format now includes `None` or `null` (serialized string) for the missi
 
 # Installation
 
-You can install the package directly from github via:
+You can install the package directly from pypi:
 ```
 pip install protobuf2arr
 ```
