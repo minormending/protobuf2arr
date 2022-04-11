@@ -13,7 +13,9 @@ from test_alternate_default_pb2 import TestQueueAlt
 
 
 class TestSerializer(TestCase):
-    def _test_deserialization(self, queue: Message, arr: List[Any], serial: str, message_cls: Message) -> Message:
+    def _test_deserialization(
+        self, queue: Message, arr: List[Any], serial: str, message_cls: Message
+    ) -> Message:
         msg = arr_to_msg(arr, message_cls())
         self.assertEqual(queue, msg)
 
@@ -119,7 +121,7 @@ class TestSerializer(TestCase):
     def test_serialization_alternate_default_empty(self):
         queue = TestQueueAlt()
         arr = msg_to_arr(queue)
-        self.assertEqual(arr, [0, 0.0, '', False, b'', 0, []])
+        self.assertEqual(arr, [0, 0.0, "", False, b"", 0, []])
 
         serial = serialize_msg2arr(queue)
         self.assertEqual(serial, '[0,0.0,"",false,"",0,[]]')
@@ -130,13 +132,15 @@ class TestSerializer(TestCase):
         queue = TestQueueAlt()
         queue.items.append(TestQueueAlt.TestItem())
         arr = msg_to_arr(queue)
-        self.assertEqual(arr, [0, 0.0, '', False, b'', 0, [[0, 0.0, '', False, b'', 0]]])
+        self.assertEqual(
+            arr, [0, 0.0, "", False, b"", 0, [[0, 0.0, "", False, b"", 0]]]
+        )
 
         serial = serialize_msg2arr(queue)
         self.assertEqual(serial, '[0,0.0,"",false,"",0,[[0,0.0,"",false,"",0]]]')
 
         self._test_deserialization(queue, arr, serial, TestQueueAlt)
-    
+
     def test_serialization_alternate_default_filled(self):
         queue = TestQueueAlt()
         queue.field_int = 1
