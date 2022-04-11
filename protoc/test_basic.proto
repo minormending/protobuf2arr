@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package test_default;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FieldOptions {
+    optional string nullable = 50027;
+}
+
+message TestQueue {
+    enum TestEnum {
+        TEST_ENUM_0 = 0;
+        TEST_ENUM_1 = 1;
+        TEST_ENUM_2 = 2;
+    }
+
+    int32 field_int = 1 [(nullable) = '0'];
+    double field_double = 2 [(nullable) = '0.0'];
+    string field_string = 3 [(nullable) = ''];
+    bool field_bool = 4 [(nullable) = 'False'];
+    bytes field_bytes = 5 [(nullable) = ''];
+    TestEnum field_enum = 6 [(nullable) = '0'];
+
+    repeated TestItem items = 7 [(nullable) = ''];
+
+    message TestItem {
+        int32 item_field_int = 1 [(nullable) = '0'];
+        double item_field_double = 2 [(nullable) = '0.0'];
+        string item_field_string = 3 [(nullable) = ''];
+        bool item_field_bool = 4 [(nullable) = 'False'];
+        bytes item_field_bytes = 5 [(nullable) = ''];
+        TestEnum item_field_enum = 6 [(nullable) = '0'];
+    }
+}
