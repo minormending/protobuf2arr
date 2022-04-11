@@ -1,4 +1,4 @@
-import json
+import simplejson as json
 from typing import Any, List
 from google.protobuf.message import Message
 
@@ -32,16 +32,17 @@ def msg_to_arr(obj: Message) -> List[Any]:
                 val = list_vals
             else:
                 val = msg_to_arr(val)
-        elif default_values and str(val) in default_values:
-            val = None
+        elif default_values:
+            if field.type == field.TYPE_BYTES and str(val, "UTF-8") in default_values:
+                val = None
+            elif str(val) in default_values:
+                val = None
 
         result.append(val)
-    print(obj.DESCRIPTOR.name, "result:", result)
     return result
 
 
 def arr_to_msg(arr: List[Any], msg: Message) -> Message:
-    print(msg.DESCRIPTOR.name, "arr:", arr)
     for idx, item in enumerate(arr):
         if item is None:
             continue
@@ -60,6 +61,8 @@ def arr_to_msg(arr: List[Any], msg: Message) -> Message:
                 ls.extend(field_val)
             else:
                 arr_to_msg(item, getattr(msg, field.name))
+        elif field.type == field.TYPE_BYTES and isinstance(item, str):
+            setattr(msg, field.name, item.encode("UTF-8"))
         else:
             setattr(msg, field.name, item)
     return msg
@@ -67,7 +70,7 @@ def arr_to_msg(arr: List[Any], msg: Message) -> Message:
 
 def serialize_msg2arr(message: Message) -> str:
     arr = msg_to_arr(message)
-    return json.dumps(arr)
+    return json.dumps(arr, separators=(",", ":"))
 
 
 def deserialize_arr2msg(arr_str: str, message: Message) -> Message:
