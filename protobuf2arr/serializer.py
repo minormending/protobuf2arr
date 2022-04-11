@@ -1,6 +1,9 @@
+from pickletools import long1
 import simplejson as json
 from typing import Any, List
 from google.protobuf.message import Message
+from google.protobuf.descriptor import FieldDescriptor
+
 
 NULLABLE_KEY = "nullable"
 
@@ -44,8 +47,6 @@ def msg_to_arr(obj: Message) -> List[Any]:
 
 def arr_to_msg(arr: List[Any], msg: Message) -> Message:
     for idx, item in enumerate(arr):
-        if item is None:
-            continue
         num = idx + 1
         field = msg.DESCRIPTOR.fields_by_number[num]
         if field.type == field.TYPE_MESSAGE:
@@ -54,7 +55,9 @@ def arr_to_msg(arr: List[Any], msg: Message) -> Message:
                 cls = field.message_type._concrete_class
                 for sub_item in item:
                     if not sub_item:
-                        field_val.append(cls())
+                        sub_item_cls = cls()
+                        sub_item_vals = [None for _ in sub_item_cls.DESCRIPTOR.fields]
+                        field_val.append(arr_to_msg(sub_item_vals, sub_item_cls))
                     else:
                         field_val.append(arr_to_msg(sub_item, cls()))
                 ls = getattr(msg, field.name)
@@ -63,9 +66,50 @@ def arr_to_msg(arr: List[Any], msg: Message) -> Message:
                 arr_to_msg(item, getattr(msg, field.name))
         elif field.type == field.TYPE_BYTES and isinstance(item, str):
             setattr(msg, field.name, item.encode("UTF-8"))
+        elif item == None and (options := field.GetOptions()):
+            default_value = next(
+                filter(
+                    lambda v: v is not None,
+                    [
+                        options.Extensions[ext]
+                        for ext in options.Extensions
+                        if ext.name == NULLABLE_KEY
+                    ],
+                )
+            )
+            typed_value = _str_to_type(field, default_value)
+            setattr(msg, field.name, typed_value)
         else:
             setattr(msg, field.name, item)
     return msg
+
+
+def _str_to_type(field: FieldDescriptor, value: str) -> Any:
+    if field.type == field.TYPE_STRING:
+        return value
+    elif field.type == field.TYPE_BOOL:
+        return value.lower() in ["true", "1", "yes"]
+    elif field.type == field.TYPE_BYTES:
+        return value.encode("UTF-8")
+    elif field.type == field.TYPE_ENUM:
+        return int(value)
+    elif field.type == field.TYPE_DOUBLE or field.type == field.TYPE_FLOAT:
+        return float(value)
+    elif field.type in [
+        field.TYPE_FIXED32,
+        field.TYPE_FIXED64,
+        field.TYPE_INT32,
+        field.TYPE_INT64,
+        field.TYPE_SFIXED32,
+        field.TYPE_SFIXED64,
+        field.TYPE_SINT32,
+        field.TYPE_SINT64,
+        field.TYPE_UINT32,
+        field.TYPE_UINT64,
+    ]:
+        return int(value)
+    else:
+        return None
 
 
 def serialize_msg2arr(message: Message) -> str:
