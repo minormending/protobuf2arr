@@ -1,6 +1,7 @@
+from asyncio.log import logger
 from pickletools import long1
 import simplejson as json
-from typing import Any, List
+from typing import Any, Callable, List
 from google.protobuf.message import Message
 from google.protobuf.descriptor import FieldDescriptor
 
@@ -40,7 +41,8 @@ def msg_to_arr(obj: Message) -> List[Any]:
                 val = None
             elif str(val) in default_values:
                 val = None
-
+        if field.label == field.LABEL_REPEATED and val != None:
+            val = [item for item in val]
         result.append(val)
     return result
 
@@ -60,8 +62,7 @@ def arr_to_msg(arr: List[Any], msg: Message) -> Message:
                         field_val.append(arr_to_msg(sub_item_vals, sub_item_cls))
                     else:
                         field_val.append(arr_to_msg(sub_item, cls()))
-                ls = getattr(msg, field.name)
-                ls.extend(field_val)
+                _assign_list_field(msg, field, field_val)
             else:
                 arr_to_msg(item, getattr(msg, field.name))
         elif field.type == field.TYPE_BYTES and isinstance(item, str):
@@ -78,23 +79,36 @@ def arr_to_msg(arr: List[Any], msg: Message) -> Message:
                 )
             )
             typed_value = _str_to_type(field, default_value)
-            setattr(msg, field.name, typed_value)
+            _assign_list_field(msg, field, typed_value)
         else:
             setattr(msg, field.name, item)
     return msg
 
+def _assign_list_field(msg: Message, field: FieldDescriptor, value: List[Any]) -> None:
+    if field.label == field.LABEL_REPEATED and isinstance(value, list):
+        ls = getattr(msg, field.name)
+        ls.extend(value)
+    else:
+        setattr(msg, field.name, value)
 
 def _str_to_type(field: FieldDescriptor, value: str) -> Any:
+    value_arr: List[Any] = None
+    if field.label == field.LABEL_REPEATED:
+        try:
+            value_arr = json.loads(value)
+        except:
+            logger.warn("Invalid default value for repeated field: " + field.name)
+
     if field.type == field.TYPE_STRING:
-        return value
+        return value if value_arr is None else value_arr
     elif field.type == field.TYPE_BOOL:
-        return value.lower() in ["true", "1", "yes"]
+        return value.lower() in ["true", "1", "yes"]  if value_arr is None else value_arr
     elif field.type == field.TYPE_BYTES:
-        return value.encode("UTF-8")
+        return value.encode("UTF-8") if value_arr is None else value_arr
     elif field.type == field.TYPE_ENUM:
-        return int(value)
+        return int(value) if value_arr is None else value_arr
     elif field.type == field.TYPE_DOUBLE or field.type == field.TYPE_FLOAT:
-        return float(value)
+        return float(value) if value_arr is None else value_arr
     elif field.type in [
         field.TYPE_FIXED32,
         field.TYPE_FIXED64,
@@ -107,9 +121,9 @@ def _str_to_type(field: FieldDescriptor, value: str) -> Any:
         field.TYPE_UINT32,
         field.TYPE_UINT64,
     ]:
-        return int(value)
+        return int(value) if value_arr is None else value_arr
     else:
-        return None
+        return None if value_arr is None else value_arr
 
 
 def serialize_msg2arr(message: Message) -> str:
