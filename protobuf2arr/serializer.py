@@ -1,7 +1,6 @@
 from asyncio.log import logger
-from pickletools import long1
 import simplejson as json
-from typing import Any, Callable, List
+from typing import Any, List
 from google.protobuf.message import Message
 from google.protobuf.descriptor import FieldDescriptor
 

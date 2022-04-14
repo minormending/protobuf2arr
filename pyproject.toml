@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "protobuf2arr"
-version = "0.1.1"
+version = "0.1.2"
 description = "Translate a protobuf message to Google's RPC array format."
 authors = ["Kevin Ramdath <krpent@gmail.com>"]
 repository = "https://github.com/minormending/protobuf2arr"
