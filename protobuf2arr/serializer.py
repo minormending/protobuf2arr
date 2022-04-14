@@ -53,22 +53,26 @@ def arr_to_msg(arr: List[Any], msg: Message) -> Message:
         field = msg.DESCRIPTOR.fields_by_number[num]
         if field.type == field.TYPE_MESSAGE:
             if field.label == field.LABEL_REPEATED:
-                field_val = []
                 cls = field.message_type._concrete_class
+                models = []
                 for sub_item in item:
-                    if not sub_item:
-                        sub_item_cls = cls()
-                        sub_item_vals = [None for _ in sub_item_cls.DESCRIPTOR.fields]
-                        field_val.append(arr_to_msg(sub_item_vals, sub_item_cls))
-                    else:
-                        field_val.append(arr_to_msg(sub_item, cls()))
-                _assign_list_field(msg, field, field_val)
+                    # None-type is Message with default values
+                    value = (
+                        [None for _ in cls.DESCRIPTOR.fields]
+                        if sub_item is None
+                        else sub_item
+                    )
+                    model = cls()
+                    arr_to_msg(value, model)  # fill model
+                    models.append(model)
+                _assign_field_value(msg, field, models)
             else:
-                arr_to_msg(item, getattr(msg, field.name))
+                model = getattr(msg, field.name)
+                arr_to_msg(item, model)  # fill model
         elif field.type == field.TYPE_BYTES and isinstance(item, str):
-            setattr(msg, field.name, item.encode("UTF-8"))
+            _assign_field_value(msg, field, item.encode("UTF-8"))
         elif item == None and (options := field.GetOptions()):
-            default_value = next(
+            default_str_value = next(
                 filter(
                     lambda v: v is not None,
                     [
@@ -78,18 +82,20 @@ def arr_to_msg(arr: List[Any], msg: Message) -> Message:
                     ],
                 )
             )
-            typed_value = _str_to_type(field, default_value)
-            _assign_list_field(msg, field, typed_value)
+            typed_value = _str_to_type(field, default_str_value)
+            _assign_field_value(msg, field, typed_value)
         else:
-            setattr(msg, field.name, item)
+            _assign_field_value(msg, field, item)
     return msg
 
-def _assign_list_field(msg: Message, field: FieldDescriptor, value: List[Any]) -> None:
+
+def _assign_field_value(msg: Message, field: FieldDescriptor, value: Any) -> None:
     if field.label == field.LABEL_REPEATED and isinstance(value, list):
         ls = getattr(msg, field.name)
         ls.extend(value)
     else:
         setattr(msg, field.name, value)
+
 
 def _str_to_type(field: FieldDescriptor, value: str) -> Any:
     value_arr: List[Any] = None
@@ -102,7 +108,7 @@ def _str_to_type(field: FieldDescriptor, value: str) -> Any:
     if field.type == field.TYPE_STRING:
         return value if value_arr is None else value_arr
     elif field.type == field.TYPE_BOOL:
-        return value.lower() in ["true", "1", "yes"]  if value_arr is None else value_arr
+        return value.lower() in ["true", "1", "yes"] if value_arr is None else value_arr
     elif field.type == field.TYPE_BYTES:
         return value.encode("UTF-8") if value_arr is None else value_arr
     elif field.type == field.TYPE_ENUM:
