@@ -21,8 +21,9 @@ message TestQueue {
     bool field_bool = 4 [(nullable) = 'False'];
     bytes field_bytes = 5 [(nullable) = ''];
     TestEnum field_enum = 6 [(nullable) = '0'];
+    repeated int32 repeated_int = 7 [(nullable) = '[]'];
 
-    repeated TestItem items = 7 [(nullable) = ''];
+    repeated TestItem items = 8 [(nullable) = ''];
 
     message TestItem {
         int32 item_field_int = 1 [(nullable) = '0'];
