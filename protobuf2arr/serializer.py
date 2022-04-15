@@ -1,4 +1,4 @@
-from asyncio.log import logger
+import logging
 import simplejson as json
 from typing import Any, List
 from google.protobuf.message import Message
@@ -102,7 +102,7 @@ def _str_to_type(field: FieldDescriptor, value: str) -> Any:
         try:
             value_arr = json.loads(value)
         except:
-            logger.warn("Invalid default value for repeated field: " + field.name)
+            logging.warn("Invalid default value for repeated field: " + field.name)
 
     if field.type == field.TYPE_STRING:
         return value if value_arr is None else value_arr
