@@ -34,7 +34,10 @@ def msg_to_arr(obj: Message) -> List[Any]:
                         list_vals.append(msg_to_arr(item))
                 val = list_vals
             else:
-                val = msg_to_arr(val)
+                if default_values and str(val).strip() in default_values:
+                    val = None
+                else:
+                    val = msg_to_arr(val)
         elif default_values:
             if field.type == field.TYPE_BYTES and str(val, "UTF-8") in default_values:
                 val = None
@@ -51,8 +54,8 @@ def arr_to_msg(arr: List[Any], msg: Message) -> Message:
         num = idx + 1
         field = msg.DESCRIPTOR.fields_by_number[num]
         if field.type == field.TYPE_MESSAGE:
+            cls = field.message_type._concrete_class
             if field.label == field.LABEL_REPEATED:
-                cls = field.message_type._concrete_class
                 models = []
                 for sub_item in item:
                     # None-type is Message with default values
@@ -66,8 +69,10 @@ def arr_to_msg(arr: List[Any], msg: Message) -> Message:
                     models.append(model)
                 _assign_field_value(msg, field, models)
             else:
+                # None-type is Message with default values
+                value = [None for _ in cls.DESCRIPTOR.fields] if item is None else item
                 model = getattr(msg, field.name)
-                arr_to_msg(item, model)  # fill model
+                arr_to_msg(value, model)  # fill model
         elif field.type == field.TYPE_BYTES and isinstance(item, str):
             _assign_field_value(msg, field, item.encode("UTF-8"))
         elif item == None and (options := field.GetOptions()):
