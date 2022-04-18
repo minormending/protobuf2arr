@@ -34,7 +34,10 @@ def msg_to_arr(obj: Message) -> List[Any]:
                         list_vals.append(msg_to_arr(item))
                 val = list_vals
             else:
-                val = msg_to_arr(val)
+                if default_values and str(val).strip() in default_values:
+                    val = None
+                else:
+                    val = msg_to_arr(val)
         elif default_values:
             if field.type == field.TYPE_BYTES and str(val, "UTF-8") in default_values:
                 val = None
