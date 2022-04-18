@@ -24,6 +24,7 @@ message TestQueue {
     repeated int32 repeated_int = 7 [(nullable) = '[]'];
 
     repeated TestItem items = 8 [(nullable) = ''];
+    TestItem field_item = 9 [(nullable) = ''];
 
     message TestItem {
         int32 item_field_int = 1 [(nullable) = '0'];

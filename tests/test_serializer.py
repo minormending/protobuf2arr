@@ -25,22 +25,24 @@ class TestSerializer(TestCase):
 
     def test_serialization_basic_default_empty(self):
         queue = TestQueueBasic()
+        queue.field_item.item_field_int = 0
         arr = msg_to_arr(queue)
-        self.assertEqual(arr, [None, None, None, None, None, None, None, []])
+        self.assertEqual(arr, [None, None, None, None, None, None, None, [], None])
 
         serial = serialize_msg2arr(queue)
-        self.assertEqual(serial, "[null,null,null,null,null,null,null,[]]")
+        self.assertEqual(serial, "[null,null,null,null,null,null,null,[],null]")
 
         self._test_deserialization(queue, arr, serial, TestQueueBasic)
 
     def test_serialization_basic_default_empty_subitems(self):
         queue = TestQueueBasic()
         queue.items.append(TestQueueBasic.TestItem())
+        queue.field_item.item_field_int = 0
         arr = msg_to_arr(queue)
-        self.assertEqual(arr, [None, None, None, None, None, None, None, [None]])
+        self.assertEqual(arr, [None, None, None, None, None, None, None, [None], None])
 
         serial = serialize_msg2arr(queue)
-        self.assertEqual(serial, "[null,null,null,null,null,null,null,[null]]")
+        self.assertEqual(serial, "[null,null,null,null,null,null,null,[null],null]")
 
         self._test_deserialization(queue, arr, serial, TestQueueBasic)
 
@@ -54,12 +56,13 @@ class TestSerializer(TestCase):
         queue.field_enum = TestQueueBasic.TestEnum.TEST_ENUM_0
         queue.repeated_int.append(1)
         queue.repeated_int.pop()
+        queue.field_item.item_field_int = 0
 
         arr = msg_to_arr(queue)
-        self.assertEqual(arr, [None, None, None, None, None, None, None, []])
+        self.assertEqual(arr, [None, None, None, None, None, None, None, [], None])
 
         serial = serialize_msg2arr(queue)
-        self.assertEqual(serial, "[null,null,null,null,null,null,null,[]]")
+        self.assertEqual(serial, "[null,null,null,null,null,null,null,[],null]")
 
         self._test_deserialization(queue, arr, serial, TestQueueBasic)
 
@@ -73,14 +76,29 @@ class TestSerializer(TestCase):
         queue.field_enum = TestQueueBasic.TestEnum.TEST_ENUM_1
         queue.repeated_int.append(24)
         queue.repeated_int.append(37)
+        queue.field_item.item_field_int = 43
 
         arr = msg_to_arr(queue)
         self.assertEqual(
-            arr, [100, 77.89, "Hello World", True, b"bytes", 1, [24, 37], []]
+            arr,
+            [
+                100,
+                77.89,
+                "Hello World",
+                True,
+                b"bytes",
+                1,
+                [24, 37],
+                [],
+                [43, None, None, None, None, None],
+            ],
         )
 
         serial = serialize_msg2arr(queue)
-        self.assertEqual(serial, '[100,77.89,"Hello World",true,"bytes",1,[24,37],[]]')
+        self.assertEqual(
+            serial,
+            '[100,77.89,"Hello World",true,"bytes",1,[24,37],[],[43,null,null,null,null,null]]',
+        )
 
         self._test_deserialization(queue, arr, serial, TestQueueBasic)
 
@@ -104,6 +122,8 @@ class TestSerializer(TestCase):
         subitem.item_field_enum = TestQueueBasic.TestEnum.TEST_ENUM_2
         queue.items.append(subitem)
 
+        queue.field_item.item_field_int = 0
+
         arr = msg_to_arr(queue)
         self.assertEqual(
             arr,
@@ -116,13 +136,14 @@ class TestSerializer(TestCase):
                 1,
                 [24, 37],
                 [[45, 23.67, "Hello Inner World", True, b"bytes inner", 2]],
+                None,
             ],
         )
 
         serial = serialize_msg2arr(queue)
         self.assertEqual(
             serial,
-            '[100,77.89,"Hello World",true,"bytes",1,[24,37],[[45,23.67,"Hello Inner World",true,"bytes inner",2]]]',
+            '[100,77.89,"Hello World",true,"bytes",1,[24,37],[[45,23.67,"Hello Inner World",true,"bytes inner",2]],null]',
         )
 
         self._test_deserialization(queue, arr, serial, TestQueueBasic)
